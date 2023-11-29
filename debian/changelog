@@ -1,3 +1,57 @@
+geocode-glib (3.26.3-6) unstable; urgency=medium
+
+  * Cherry-pick patch to fix geolocation in Initial Setup, Clocks
+    (Closes: #1034158) (LP: #2015706)
+  * Have the library package depend on the -common package
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 10 Apr 2023 08:58:39 -0400
+
+geocode-glib (3.26.3-5) unstable; urgency=medium
+
+  * Update debian/upstream/metadata
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 15 Dec 2022 14:39:31 -0500
+
+geocode-glib (3.26.3-4) unstable; urgency=medium
+
+  * Team upload
+
+  [ Debian Janitor ]
+  * Bump debhelper from old 12 to 13
+  * Set upstream metadata fields: Bug-Database
+  * Update standards version to 4.6.1, no changes needed
+  * Avoid explicitly specifying -Wl,--as-needed linker flag
+
+  [ Nathan Pratta Teodosio ]
+  * Move icons to a new package, geocode-glib-common, for smoother
+    library transitions in the future
+
+ -- Nathan Pratta Teodosio <nathan.teodosio@canonical.com>  Tue, 13 Dec 2022 16:03:52 -0500
+
+geocode-glib (3.26.3-3) unstable; urgency=medium
+
+  * Release to unstable
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 05 Sep 2022 15:11:48 -0400
+
+geocode-glib (3.26.3-2) experimental; urgency=medium
+
+  * Set Breaks for libsoup3 transition
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 24 Aug 2022 22:28:16 -0400
+
+geocode-glib (3.26.3-1) experimental; urgency=medium
+
+  * New upstream release
+  * Build with libsoup3
+  * Update package names for API bump
+  * Update autopkgtests for API bump
+  * Revert an installed tests commit that incorrectly changed the install
+    directory
+  * Cherry-pick patch to fix installed tests issue
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 04 Aug 2022 16:31:29 -0400
+
 geocode-glib (3.26.2-2) unstable; urgency=medium
 
   * Ship the installed tests and use them for the autopkgtests (Closes:

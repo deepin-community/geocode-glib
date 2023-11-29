@@ -96,6 +96,7 @@ static struct {
 	/* Custom keys which are passed through: */
 	{ "location", "location" },
 	{ "limit", "limit" },
+	{ "bounded", "bounded" },
 };
 
 static const char *
@@ -132,7 +133,6 @@ geocode_forward_fill_params (GHashTable *params)
 		gboolean found;
 		const char *gc_attr;
 		char *str = NULL;
-		GValue string_value = G_VALUE_INIT;
 
 		gc_attr = tp_attr_to_gc_attr (key, &found);
 		if (found == FALSE) {
@@ -142,10 +142,16 @@ geocode_forward_fill_params (GHashTable *params)
 		if (gc_attr == NULL)
 			continue;
 
-		g_value_init (&string_value, G_TYPE_STRING);
-		g_assert (g_value_transform (value, &string_value));
-		str = g_value_dup_string (&string_value);
-		g_value_unset (&string_value);
+		if (G_VALUE_HOLDS_BOOLEAN (value)) {
+			str = g_strdup (g_value_get_boolean (value) ? "1" : "0");;
+		} else {
+			GValue string_value = G_VALUE_INIT;
+
+			g_value_init (&string_value, G_TYPE_STRING);
+			g_assert (g_value_transform (value, &string_value));
+			str = g_value_dup_string (&string_value);
+			g_value_unset (&string_value);
+		}
 
 		if (str == NULL)
 			continue;
@@ -875,6 +881,43 @@ geocode_nominatim_query_finish (GeocodeNominatim  *self,
 	return g_task_propagate_pointer (G_TASK (res), error);
 }
 
+#if SOUP_CHECK_VERSION (2, 99, 2)
+static void
+on_query_data_loaded (GObject      *object,
+                      GAsyncResult *result,
+                      gpointer      user_data)
+{
+	SoupSession *session = SOUP_SESSION (object);
+	SoupMessage *query = soup_session_get_async_result_message (session, result);
+	GError *error = NULL;
+	GBytes *body = soup_session_send_and_read_finish (session, result, &error);
+	GTask *task = user_data;
+	char *contents;
+
+	if (!body) {
+		g_task_return_new_error (task,
+		                         G_IO_ERROR,
+		                         G_IO_ERROR_FAILED,
+		                         "%s",
+		                         error->message);
+		g_clear_error (&error);
+	} else if (soup_message_get_status (query) != SOUP_STATUS_OK) {
+		const char *reason_phrase = soup_message_get_reason_phrase (query);
+		g_bytes_unref (body);
+		g_task_return_new_error (task,
+		                         G_IO_ERROR,
+		                         G_IO_ERROR_FAILED,
+		                         "%s",
+		                         reason_phrase ? reason_phrase : "Query failed");
+	} else {
+		contents = g_bytes_unref_to_data (body, NULL);
+		_geocode_glib_cache_save (query, contents);
+		g_task_return_pointer (task, contents, g_free);
+	}
+
+	g_object_unref (task);
+}
+#else
 static void
 on_query_data_loaded (SoupSession *session,
                       SoupMessage *query,
@@ -896,6 +939,7 @@ on_query_data_loaded (SoupSession *session,
 
 	g_object_unref (task);
 }
+#endif
 
 static void
 on_cache_data_loaded (GFile        *cache,
@@ -922,10 +966,19 @@ on_cache_data_loaded (GFile        *cache,
 	}
 
 	soup_session = _geocode_glib_build_soup_session (priv->user_agent);
+#if SOUP_CHECK_VERSION (2, 99, 2)
+	soup_session_send_and_read_async (soup_session,
+	                                  g_task_get_task_data (task),
+	                                  G_PRIORITY_DEFAULT,
+	                                  NULL,
+	                                  on_query_data_loaded,
+	                                  task);
+#else
 	soup_session_queue_message (soup_session,
 	                            g_object_ref (g_task_get_task_data (task)),
 	                            (SoupSessionCallback) on_query_data_loaded,
 	                            task);
+#endif
 	g_object_unref (soup_session);
 }
 
@@ -966,10 +1019,19 @@ geocode_nominatim_query_async (GeocodeNominatim    *self,
 	}
 
 	soup_session = _geocode_glib_build_soup_session (priv->user_agent);
+#if SOUP_CHECK_VERSION (2, 99, 2)
+	soup_session_send_and_read_async (soup_session,
+	                                  soup_query,
+	                                  G_PRIORITY_DEFAULT,
+	                                  NULL,
+	                                  on_query_data_loaded,
+	                                  task);
+#else
 	soup_session_queue_message (soup_session,
 	                            g_object_ref (soup_query),
 	                            (SoupSessionCallback) on_query_data_loaded,
 	                            task);
+#endif
 	g_object_unref (soup_session);
 }
 
@@ -995,6 +1057,25 @@ geocode_nominatim_query (GeocodeNominatim  *self,
 	soup_query = soup_message_new (SOUP_METHOD_GET, uri);
 
 	if (_geocode_glib_cache_load (soup_query, &contents) == FALSE) {
+#if SOUP_CHECK_VERSION (2, 99, 2)
+		GError *serror = NULL;
+		GBytes *body = soup_session_send_and_read (soup_session, soup_query, NULL, &serror);
+		if (!body) {
+			g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+			                     serror->message);
+			g_clear_error (&serror);
+			contents = NULL;
+		} else if (soup_message_get_status (soup_query) != SOUP_STATUS_OK) {
+			const char *reason_phrase = soup_message_get_reason_phrase (soup_query);
+			g_bytes_unref (body);
+			g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+			                     reason_phrase ? reason_phrase : "Query failed");
+			contents = NULL;
+		} else {
+			contents = g_bytes_unref_to_data (body, NULL);
+			_geocode_glib_cache_save (soup_query, contents);
+		}
+#else
 		if (soup_session_send_message (soup_session, soup_query) != SOUP_STATUS_OK) {
 			g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
 			                     soup_query->reason_phrase ? soup_query->reason_phrase : "Query failed");
@@ -1003,6 +1084,7 @@ geocode_nominatim_query (GeocodeNominatim  *self,
 			contents = g_strndup (soup_query->response_body->data, soup_query->response_body->length);
 			_geocode_glib_cache_save (soup_query, contents);
 		}
+#endif
 	}
 
 	g_object_unref (soup_query);
