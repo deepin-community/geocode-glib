@@ -1,0 +1,21 @@
+From: Jeremy Bicha <jeremy.bicha@canonical.com>
+Date: Thu, 4 Aug 2022 16:28:42 -0400
+Subject: Revert "build: Install tests in datadir not libexecdir"
+
+This reverts commit 7c2bdb88fa6d27ce0d834a41f79850080a7dc79b.
+
+https://gitlab.gnome.org/GNOME/geocode-glib/-/issues/29
+---
+ geocode-glib/tests/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/geocode-glib/tests/meson.build b/geocode-glib/tests/meson.build
+index 8e9963a..ae579be 100644
+--- a/geocode-glib/tests/meson.build
++++ b/geocode-glib/tests/meson.build
+@@ -1,4 +1,4 @@
+-install_dir = get_option('prefix') / get_option('datadir') / 'installed-tests' / library_name
++install_dir = get_option('prefix') / get_option('libexecdir') / 'installed-tests' / library_name
+ 
+ e = executable('geo-uri',
+                'geo-uri.c',

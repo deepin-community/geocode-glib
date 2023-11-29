@@ -2,6 +2,6 @@
 
 set -e
 
-/usr/libexec/installed-tests/geocode-glib/geo-uri
-/usr/libexec/installed-tests/geocode-glib/geocode-glib
-/usr/libexec/installed-tests/geocode-glib/mock-backend
+/usr/libexec/installed-tests/geocode-glib-2/geo-uri
+/usr/libexec/installed-tests/geocode-glib-2/geocode-glib
+/usr/libexec/installed-tests/geocode-glib-2/mock-backend

@@ -3,26 +3,31 @@ Section: libs
 Priority: optional
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
 Uploaders: @GNOME_TEAM@
-Build-Depends: debhelper-compat (= 12),
+Build-Depends: debhelper-compat (= 13),
                gnome-pkg-tools,
                libglib2.0-dev (>= 2.44),
                libjson-glib-dev (>= 0.99.2),
-               libsoup2.4-dev (>= 2.42),
+               libsoup-3.0-dev,
                meson,
                gobject-introspection (>= 0.9.12-4~),
                libgirepository1.0-dev (>= 0.9.3)
 Build-Depends-Indep: gtk-doc-tools (>= 1.13) <!nodoc>, libglib2.0-doc <!nodoc>
 Rules-Requires-Root: no
-Standards-Version: 4.5.0
+Standards-Version: 4.6.1
 Vcs-Browser: https://salsa.debian.org/gnome-team/geocode-glib
 Vcs-Git: https://salsa.debian.org/gnome-team/geocode-glib.git
 
-Package: libgeocode-glib0
+Package: libgeocode-glib-2-0
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${shlibs:Depends},
-         ${misc:Depends}
+         ${misc:Depends},
+         geocode-glib-common (>= ${source:Version})
+Breaks: gnome-clocks (<< 43~beta-2~),
+        gnome-initial-setup (<< 43~),
+        gnome-maps (<< 43~),
+        gnome-settings-daemon (<< 43~beta-2~)
 Description: geocoding and reverse geocoding GLib library using Nominatim
  Geocode-glib allows you to do geocoding (going from a place name,
  to a longitude/latitude pair) and reverse geocoding (finding a place
@@ -35,8 +40,8 @@ Package: libgeocode-glib-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
-Depends: libgeocode-glib0 (= ${binary:Version}),
-         gir1.2-geocodeglib-1.0 (= ${binary:Version}),
+Depends: libgeocode-glib-2-0 (= ${binary:Version}),
+         gir1.2-geocodeglib-2.0 (= ${binary:Version}),
          libglib2.0-dev,
          ${misc:Depends}
 Suggests: libgeocode-glib-doc
@@ -66,7 +71,7 @@ Description: gtk-doc documentation for geocode-glib library
  .
  This package contains the documentation for geocode-glib.
 
-Package: gir1.2-geocodeglib-1.0
+Package: gir1.2-geocodeglib-2.0
 Section: introspection
 Architecture: any
 Multi-Arch: same
@@ -84,7 +89,7 @@ Description: introspection data for geocode-glib library
 
 Package: geocode-glib-tests
 Architecture: any
-Depends: libgeocode-glib0 (= ${binary:Version}),
+Depends: libgeocode-glib-2-0 (= ${binary:Version}),
          ${shlibs:Depends},
          ${misc:Depends}
 Description: installed tests for the geocode-glib library
@@ -93,3 +98,15 @@ Description: installed tests for the geocode-glib library
  name from coordinates) using the Nominatim service.
  .
  This package contains the tests for the geocode-glib library.
+
+Package: geocode-glib-common
+Depends: ${misc:Depends}
+Breaks: libgeocode-glib-2-0 (<< 3.26.3-4~)
+Replaces: libgeocode-glib-2-0 (<< 3.26.3-4~)
+Architecture: all
+Description: icons for the geocode-glib library
+ Geocode-glib allows you to do geocoding (going from a place name,
+ to a longitude/latitude pair) and reverse geocoding (finding a place
+ name from coordinates) using the Nominatim service.
+ .
+ This package contains the icons for the geocode-glib library.

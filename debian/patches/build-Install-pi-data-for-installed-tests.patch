@@ -1,0 +1,21 @@
+From: Jan Tojnar <jtojnar@gmail.com>
+Date: Sat, 2 Jul 2022 01:00:41 +0200
+Subject: build: Install pi data for installed tests
+
+(cherry picked from commit 0eb5c21cf4deb2c45aedf5a4393d4208b8dc6d58)
+---
+ geocode-glib/tests/meson.build | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/geocode-glib/tests/meson.build b/geocode-glib/tests/meson.build
+index ae579be..9fbf11d 100644
+--- a/geocode-glib/tests/meson.build
++++ b/geocode-glib/tests/meson.build
+@@ -52,6 +52,7 @@ if get_option('enable-installed-tests')
+                'osm_type0.json',
+                'osm_type1.json',
+                'osm_type2.json',
++               'pi.json',
+                'pub.json',
+                'rev.json',
+                'rev_fail.json',

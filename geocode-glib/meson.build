@@ -33,9 +33,15 @@ public_sources = [ 'geocode-location.c',
 
 sources = public_sources + [ 'geocode-glib-private.h' ]
 
+if get_option('soup2')
+  soup_dep = dependency('libsoup-2.4', version: '>= 2.42')
+else
+  soup_dep = dependency('libsoup-3.0', version: '>= 2.99.2')
+endif
+
 deps = [ dependency('gio-2.0', version: '>= 2.34'),
-		 dependency('json-glib-1.0', version: '>= 0.99.2'),
-		 dependency('libsoup-2.4', version: '>= 2.42') ]
+         dependency('json-glib-1.0', version: '>= 0.99.2'),
+         soup_dep ]
 libm = cc.find_library('m', required: false)
 if libm.found()
     deps += [ libm ]
@@ -60,7 +66,11 @@ current = major_version + minor_version + 1
 interface_age = micro_version
 darwin_versions = [current, '@0@.@1@'.format(current, interface_age)]
 
-libgcglib = shared_library('geocode-glib',
+library_name = 'geocode-glib'
+if not get_option('soup2')
+  library_name += '-2'
+endif
+libgcglib = shared_library(library_name,
                            sources,
                            dependencies: deps,
                            include_directories: include,
@@ -73,6 +83,12 @@ libgcglib = shared_library('geocode-glib',
 
 install_headers(headers, subdir: header_subdir)
 
+if get_option('soup2')
+  soup_api_version = '2.4'
+else
+  soup_api_version = '3.0'
+endif
+
 pkgconf = import('pkgconfig')
 pkgconf.generate(libraries: libgcglib,
                  version: gclib_version,
@@ -83,6 +99,7 @@ pkgconf.generate(libraries: libgcglib,
                  requires: 'gio-2.0',
                  variables: [
                    'apiversion=' + gclib_api_version,
+                   'soupapiversion=' + soup_api_version,
                  ])
 
 gir = find_program('g-ir-scanner', required: false)
@@ -105,7 +122,7 @@ if gir.found() and enable_gir
                      includes: [ 'GObject-2.0',
                                  'Gio-2.0',
                                  'Json-1.0',
-                                 'Soup-2.4' ],
+                                 get_option('soup2') ? 'Soup-2.4' : 'Soup-3.0' ],
                      install: true,
                      extra_args: gir_args)
 endif
@@ -115,6 +132,4 @@ geocode_glib_dep = declare_dependency(link_with: libgcglib,
                                       dependencies: deps,
                                       sources: generated_sources)
 
-if get_option('enable-installed-tests')
-    subdir('tests')
-endif
+subdir('tests')

@@ -1,0 +1,3 @@
+Revert-build-Install-tests-in-datadir-not-libexecdir.patch
+build-Install-pi-data-for-installed-tests.patch
+nominatim-Correctly-read-response-data-from-soup3.patch

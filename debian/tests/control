@@ -4,5 +4,7 @@ Depends:
  build-essential,
  libgeocode-glib-dev,
 
+#FIXME: allow-stderr shouldn't be required
 Tests: installed-tests
 Depends: geocode-glib-tests
+Restrictions: allow-stderr
